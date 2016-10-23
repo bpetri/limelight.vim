@@ -43,19 +43,19 @@ function! s:unsupported()
 endfunction
 
 function! s:getpos()
-  let bop = get(g:, 'limelight_bop', '^\s*$\n\zs')
-  let eop = get(g:, 'limelight_eop', '^\s*$')
+  let bop = get(g:, 'limelight_bop', '(')
+  let eop = get(g:, 'limelight_eop', ')')
   let span = max([0, get(g:, 'limelight_paragraph_span', 0) - s:empty(getline('.'))])
   let pos = getpos('.')
   for i in range(0, span)
-    let start = searchpos(bop, i == 0 ? 'cbW' : 'bW')[0]
+    let [startlnum, startcol] = searchpairpos(bop, '', eop,  i == 0 ? 'cbW' : 'bW')
   endfor
   call setpos('.', pos)
   for _ in range(0, span)
-    let end = searchpos(eop, 'W')[0]
+    let [endlnum, endcol] = searchpairpos(bop, '', eop, 'W')
   endfor
   call setpos('.', pos)
-  return [start, end]
+  return [startlnum, startcol, endlnum, endcol]
 endfunction
 
 function! s:empty(line)
@@ -70,27 +70,25 @@ function! s:limelight()
     let w:limelight_prev = [0, 0, 0, 0]
   endif
 
-  let curr = [line('.'), line('$')]
-  if curr ==# w:limelight_prev[0 : 1]
-    return
-  endif
-
   let paragraph = s:getpos()
-  if paragraph ==# w:limelight_prev[2 : 3]
+  if paragraph ==# w:limelight_prev[0 : 3]
     return
   endif
 
   call s:clear_hl()
   call call('s:hl', paragraph)
-  let w:limelight_prev = extend(curr, paragraph)
+  let w:limelight_prev = paragraph
 endfunction
 
-function! s:hl(startline, endline)
+function! s:hl(startline, startcol, endline, endcol)
   let w:limelight_match_ids = get(w:, 'limelight_match_ids', [])
   let priority = get(g:, 'limelight_priority', 10)
+"  call add(w:limelight_match_ids, matchadd('LimelightDim', '\%<'.a:startline.'l', priority))
   call add(w:limelight_match_ids, matchadd('LimelightDim', '\%<'.a:startline.'l', priority))
+  call add(w:limelight_match_ids, matchadd('LimelightDim', '\%'.a:startline.'l\%<'.a:startcol.'v', priority))
   if a:endline > 0
     call add(w:limelight_match_ids, matchadd('LimelightDim', '\%>'.a:endline.'l', priority))
+    call add(w:limelight_match_ids, matchadd('LimelightDim', '\%'.a:endline.'l\%>'.a:endcol.'v', priority))
   endif
 endfunction
 
@@ -209,7 +207,7 @@ function! s:on(range, ...)
   let w:limelight_range = a:range
   if !empty(a:range)
     call s:clear_hl()
-    call call('s:hl', a:range)
+    call call('s:hl', [a:range[0], 0, a:range[1], 0])
   endif
 
   augroup limelight
@@ -276,6 +274,23 @@ endfunction
 function! limelight#operator(...)
   '[,']call limelight#execute(0, 1)
 endfunction
+
+
+function! limelight#increase()
+  let g:limelight_paragraph_span = get(g:, 'limelight_paragraph_span', 0) + 1
+  call s:on([])
+endfunction
+
+
+function! limelight#decrease()
+  let curr_paragraph_span = get(g:, 'limelight_paragraph_span', 0) 
+  if curr_paragraph_span > 0
+    let g:limelight_paragraph_span = curr_paragraph_span - 1
+    call s:on([])
+  endif
+endfunction
+
+
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

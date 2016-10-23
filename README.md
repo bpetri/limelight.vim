@@ -1,12 +1,13 @@
-limelight.vim ![travis-ci](https://travis-ci.org/junegunn/limelight.vim.svg?branch=master)
+limelight.vim
 =============
 
-Hyperfocus-writing in Vim.
+Hyperfocus (clojure) programming in Vim.
+
+A adapted fork of [junegunn/limelight.vim][k] to allow highlighting based on
+parentheses.
+
 
 ![](https://raw.github.com/junegunn/i/master/limelight.gif)
-
-Best served with [Goyo.vim](https://github.com/junegunn/goyo.vim).
-Works on 256-color terminal or on GVim.
 
 Usage
 -----
@@ -46,14 +47,12 @@ let g:limelight_conceal_guifg = '#777777'
 " Default: 0.5
 let g:limelight_default_coefficient = 0.7
 
-" Number of preceding/following paragraphs to include (default: 0)
+" Number of nested parentheses pairs to include (default: 0)
 let g:limelight_paragraph_span = 1
 
-" Beginning/end of paragraph
-"   When there's no empty line between the paragraphs
-"   and each paragraph starts with indentation
-let g:limelight_bop = '^\s'
-let g:limelight_eop = '\ze\n^\s'
+" Specify pair
+let g:limelight_bop = '('
+let g:limelight_eop = ')'
 
 " Highlighting priority (default: 10)
 "   Set it to -1 not to overrule hlsearch
