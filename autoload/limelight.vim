@@ -45,16 +45,38 @@ endfunction
 function! s:getpos()
   let bop = get(g:, 'limelight_bop', '(')
   let eop = get(g:, 'limelight_eop', ')')
-  let span = max([0, get(g:, 'limelight_paragraph_span', 0) - s:empty(getline('.'))])
+
   let pos = getpos('.')
-  for i in range(0, span)
-    let [startlnum, startcol] = searchpairpos(bop, '', eop,  i == 0 ? 'cbW' : 'bW')
-  endfor
-  call setpos('.', pos)
-  for _ in range(0, span)
-    let [endlnum, endcol] = searchpairpos(bop, '', eop, 'W')
-  endfor
-  call setpos('.', pos)
+  let  numpairs = searchpair(bop, '', eop, 'cbWrm')
+
+  let [startlnum , startcol, endlnum, endcol] = [0,0,0,0]
+
+  if numpairs == 0
+    let prev_eop = searchpos(eop, 'cnbW')
+    let next_bop = searchpos(bop, 'nW') 
+    if ((pos[1] - prev_eop[0]) <= (next_bop[0] - pos[1]))
+      "prev eop
+      call setpos('.', [0, prev_eop[0], prev_eop[1] - 1, 0 ] )
+      let [startlnum, startcol] = searchpairpos(bop, '', eop, 'cbW')
+      let [endlnum, endcol] = searchpairpos(bop, '', eop, 'W')
+    else
+      "next bop
+      call setpos('.', [0, next_bop[0], next_bop[1], 0 ] )
+      let [startlnum, startcol] = searchpairpos(bop, '', eop, 'cbW')
+      let [endlnum, endcol] = searchpairpos(bop, '', eop, 'W')
+    endif
+  else
+    let span = max([0, numpairs - 1 - get(g:, 'limelight_paragraph_span', 0)])
+    call setpos('.', pos)
+    for i in range(0, span)
+      let [startlnum, startcol] = searchpairpos(bop, '', eop,  i == 0 ? 'cbW' : 'bW')
+    endfor
+    call setpos('.', pos)
+    for _ in range(0, span)
+      let [endlnum, endcol] = searchpairpos(bop, '', eop, 'W')
+    endfor
+  endif
+    call setpos('.', pos)
   return [startlnum, startcol, endlnum, endcol]
 endfunction
 
@@ -83,10 +105,9 @@ endfunction
 function! s:hl(startline, startcol, endline, endcol)
   let w:limelight_match_ids = get(w:, 'limelight_match_ids', [])
   let priority = get(g:, 'limelight_priority', 10)
-"  call add(w:limelight_match_ids, matchadd('LimelightDim', '\%<'.a:startline.'l', priority))
   call add(w:limelight_match_ids, matchadd('LimelightDim', '\%<'.a:startline.'l', priority))
   call add(w:limelight_match_ids, matchadd('LimelightDim', '\%'.a:startline.'l\%<'.a:startcol.'v', priority))
-  if a:endline > 0
+  if a:endline >= a:startline
     call add(w:limelight_match_ids, matchadd('LimelightDim', '\%>'.a:endline.'l', priority))
     call add(w:limelight_match_ids, matchadd('LimelightDim', '\%'.a:endline.'l\%>'.a:endcol.'v', priority))
   endif
