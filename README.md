@@ -6,8 +6,8 @@ Hyperfocus (clojure) programming in Vim.
 A adapted fork of [junegunn/limelight.vim][k] to allow highlighting based on
 parentheses.
 
-
-![](https://raw.github.com/junegunn/i/master/limelight.gif)
+(https://raw.github.com/bpetri/limelight.vim/master/limelight.gif://raw.github.com/bpetri/limelight.vim/master/limelight.gif)
+![](https://raw.github.com/bpetri/limelight.vim/master/limelight.gif)
 
 Usage
 -----
